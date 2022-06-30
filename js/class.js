@@ -1,63 +1,30 @@
-const fs = require('fs')
+const options_sqlite = require('../db/options/db')
+const knex_sqlite = require('knex')(options_sqlite)
+
+const options_mysql = require('../db/options/db_mysql')
+const knex_mysql = require('knex')(options_mysql)
 
     class Container{
-    constructor(object = {}){
-     this.name = object?.name || ''
-     this.price = object?.price || ''
-     this.db = [];
+    constructor(){
      this.readData()
      this.readMessages()
     }
 
-    readData() {
-        fs.readFile('./js/data.json', 'utf-8', (err, content) =>{
-            if (err) {
-                console.log('Hay un error', err)
-            }else{
-                return this.readJson = JSON.parse(content)
-            }
-     })
+   async readData() {
+        let products = [];
+        await knex_mysql.from('products').select('*')
+                .then( rows => {
+                    products.push(...rows)
+                })
+                .catch(err => console.log(err))
+        return this.readJson = products
     }
     
     saveFile(obj){
-        let db = [];
-        
-        db.push(...this.readJson, obj)
-        fs.writeFileSync('./js/data.json', JSON.stringify(db))
+        knex_mysql('products').insert(obj)
+            .then(() => console.log('data inserted'))
+            .catch(err => console.log(err))
         }
-
-    getById(myId){
-        this.readJson === '' ? {error: 'Producto no encontrado'} : ''
-        
-        const matchId = this.readJson.find((product)=> product.id === myId)
-        return matchId == undefined ? {error: 'Producto no encontrado'} : matchId
-        
-    }
-    deleteById(myId){
-            const matchId = this.readJson.filter((product)=> product.id != myId)
-            this.db.push(...matchId)
-
-            fs.writeFileSync('./js/data.json', JSON.stringify(this.db))
-        }
-
-    editById(myId, name, price, tumbnail){ 
-        const matchId = this.readJson.filter((product)=> product.id != myId)
-        this.db.push(...matchId)
-        fs.writeFileSync('./js/data.json', JSON.stringify(this.db))
-        
-        const data = {
-             id: myId,
-             name: name,
-             price: price,
-             tumbnail: tumbnail
-        }
-        this.db.push(data)
-        fs.writeFileSync('./js/data.json', JSON.stringify(this.db))
-    }
-
-    deleteAll(){
-        fs.writeFileSync('./js/data.json    ', JSON.stringify(this.db))
-    }
 
     getAll(){
         this.readData()
@@ -65,20 +32,23 @@ const fs = require('fs')
     }
 
     sendMessage(data){
-        let db = [];
-        
-        db.push(...this.readJsonMsg, data)
-        fs.writeFileSync('./js/messages.json', JSON.stringify(db))
+        knex_sqlite('messages').insert(data)
+            .then(() => console.log('data inserted'))
+            .catch(err => console.log(err))
+            // .finally(() => knex.destroy())
     }
 
-    readMessages(){
-         fs.readFile('./js/messages.json', 'utf-8', (err, content) =>{
-            if (err) {
-                console.log('Hay un error', err)
-            }else{
-                return this.readJsonMsg = JSON.parse(content)
-            }
-        })
+       async readMessages(){
+       let messages = [];
+
+       await knex_sqlite.from('messages').select('*')
+            .then( rows => {
+                messages.push(...rows)
+            })
+            .catch(err => console.log(err))
+            // .finally(() => knex.destroy())
+            
+            return this.readJsonMsg = messages;
     }
     getMessages(){
         return this.readJsonMsg

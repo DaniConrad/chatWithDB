@@ -2,7 +2,7 @@ const express = require('express')
 const { render } = require('express/lib/response')
 const Container = require('./js/class') 
 const http = require('http');
-const { Server } = require('socket.io');
+const { Server } = require('socket.io')
 
 const app = express()
 const dataBase = new Container()
@@ -25,24 +25,21 @@ io.on('connection', socket => {
     console.log('User connected, id:' + socket.id)
     const db = dataBase.getAll()
     socket.emit('products', db)
+
+
     const messages = dataBase.getMessages()
     socket.emit('messages', messages)
 
     socket.on('new-product', (product) => {
-            const {name, price, tumbnail} = product
             let newProduct = dataBase.getAll()
 
-            const id = Number(newProduct.length+1)
-            let data = {id, name, price, tumbnail}
+            dataBase.saveFile(product)
 
-            dataBase.saveFile(data)
-
-            newProduct.push(data)
+            newProduct.push(product)
             io.sockets.emit('products', newProduct)
         })
     socket.on('new-message', (text) => {
             let newMessage = dataBase.getMessages()
-            
             dataBase.sendMessage(text)
 
             newMessage.push(text)
